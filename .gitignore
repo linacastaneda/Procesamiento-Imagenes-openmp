@@ -1,0 +1,17 @@
+
+# Ejecutables
+*.o
+*.out
+*.exe
+programa
+prueba_openmp
+
+# Archivos temporales
+*.tmp
+*.log
+
+# Configuracion local
+.vscode/
+
+# Imagenes generadas
+resultados/*.pgm
