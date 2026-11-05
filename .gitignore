@@ -1,10 +1,13 @@
 
-# Ejecutables
+# Ejecutables y archivos compilados
 *.o
 *.out
 *.exe
 programa
-prueba_openmp
+test_rgb
+demo_secuencial
+test_imagen
+test_secuencial
 
 # Archivos temporales
 *.tmp
@@ -13,5 +16,10 @@ prueba_openmp
 # Configuracion local
 .vscode/
 
-# Imagenes generadas
+# Resultados visuales generados
+resultados/*.png
 resultados/*.pgm
+
+# Conservar datos y graficas de experimentos
+!resultados/*.csv
+!resultados/*.svg
