@@ -1,6 +1,6 @@
 # Diseño técnico y plan de integración
 
-**Estado:** especificación propuesta del equipo. El código RGB configurable y el menú desarrollados localmente en WSL deben validarse y publicarse antes de integrar otras ramas.
+**Estado:** módulo secuencial RGB y menú base integrados en `main` mediante el Pull Request #4. Los módulos paralelo y de experimentos están pendientes de integrar.
 
 ## Objetivo
 Aplicación en C compilada con GCC en Ubuntu/WSL que lea imágenes JPG/PNG, aplique un filtro RGB de media configurable (3x3, 7x7 o 15x15), ejecute una versión secuencial y otra paralela con OpenMP y compare rendimiento. Guardar resultados PNG, datos experimentales CSV y gráficas SVG.
@@ -17,9 +17,9 @@ typedef struct {
 void suavizar_secuencial(const Imagen *entrada, Imagen *salida, int tamano_filtro);
 void suavizar_paralelo(const Imagen *entrada, Imagen *salida, int tamano_filtro, int num_hilos);
 ```
-**Importante:** comprobar la definición final en `include/imagen.h` y `include/filtros.h` una vez que se integre el código RGB local de la integrante 1: el remoto puede conservar todavía la interfaz anterior.
+**Importante:** `include/imagen.h` y `include/filtros.h` en `main` son las interfaces compartidas vigentes. La implementación secuencial admite imágenes RGB de 8 bits (3 canales). No modificar firmas sin coordinar los cambios con los demás integrantes.
 
-- Para la aplicación interactiva se utilizará RGB de 8 bits (3 canales). Las pruebas PGM de 1 canal pueden conservarse como regresión.
+- La aplicación implementada utiliza RGB de 8 bits (3 canales). La versión actual no incluye pruebas PGM; `tests/test_rgb.c` verifica matemáticamente los tres tamaños de filtro.
 - `entrada` y `salida` tienen igual ancho/alto/canales; búferes separados y memoria suficiente. No modificar `entrada`.
 - Filtros válidos: 3, 7, 15 (impares). Radio `r=tamano_filtro/2`. Píxeles donde la ventana no cabe: copiar original sin modificar.
 - Para cada píxel interior y canal, sumar los `tamano_filtro*tamano_filtro` valores de la ventana de la **imagen de entrada** y guardar `(unsigned char)(suma/(tamano_filtro*tamano_filtro))` (división entera truncada). La versión paralela debe usar exactamente esa regla.
@@ -27,15 +27,17 @@ void suavizar_paralelo(const Imagen *entrada, Imagen *salida, int tamano_filtro,
 - La comparación debe comprobar igualdad píxel a píxel para la misma entrada y filtro. Si no son iguales, reportar error, no presentar resultados como correctos.
 - Manejar rutas inexistentes, errores de memoria, tamaños de entrada inválidos y tamaños de filtro no admitidos. Ninguna función debe sobrescribir memoria fuera del búfer.
 
-## Menú planificado (no todo está implementado)
+## Menú actual (módulo secuencial)
 1. Seleccionar JPG/PNG.
 2. Elegir 3x3, 7x7 o 15x15.
 3. Ejecutar filtro secuencial y guardar PNG.
-4. Ejecutar filtro paralelo con número de hilos configurable y guardar PNG.
-5. Comparar secuencial/paralelo: misma imagen/filtro, validación de igualdad, tiempos, speedup y eficiencia.
-6. Experimentos automáticos: >=3 resoluciones, 1/2/4 hilos si hardware lo permite, varios intentos.
-7. Ver resumen y generar gráficas SVG a partir de los CSV.
+4. Generar automáticamente las tres versiones secuenciales.
+5. Ejecutar paralelo (**pendiente**).
+6. Comparar secuencial/paralelo (**pendiente**).
+7. Experimentos y gráficas (**pendiente**).
 8. Salir.
+
+**Integración prevista:** la opción paralela debe permitir configurar hilos; la comparación deberá validar igualdad, medir tiempos, speedup y eficiencia. Los experimentos cubrirán al menos tres resoluciones, 1/2/4 hilos (cuando el hardware lo permita), repeticiones y gráficas SVG derivadas de los CSV reales.
 
 **Ideal:** además del menú, ofrecer CLI no interactiva para automatización, por ejemplo
 `./programa --imagen imagenes/foto.jpg --filtro 15 --modo comparar --hilos 4`.
