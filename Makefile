@@ -21,6 +21,7 @@ test: test_rgb
 >./test_rgb
 
 run: programa
+>mkdir -p resultados
 >./programa
 
 clean:
