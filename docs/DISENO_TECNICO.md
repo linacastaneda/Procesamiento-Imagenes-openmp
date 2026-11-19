@@ -1,6 +1,6 @@
 # Diseño técnico y plan de integración
 
-**Estado:** módulo secuencial RGB y menú base integrados en `main` mediante el Pull Request #4. Los módulos paralelo y de experimentos están pendientes de integrar.
+**Estado:** módulo secuencial RGB y menú base integrados en `main` mediante el Pull Request #4. La opción 5 incorpora el módulo paralelo RGB.
 
 ## Objetivo
 Aplicación en C compilada con GCC en Ubuntu/WSL que lea imágenes JPG/PNG, aplique un filtro RGB de media configurable (3x3, 7x7 o 15x15), ejecute una versión secuencial y otra paralela con OpenMP y compare rendimiento. Guardar resultados PNG, datos experimentales CSV y gráficas SVG.
@@ -27,17 +27,23 @@ void suavizar_paralelo(const Imagen *entrada, Imagen *salida, int tamano_filtro,
 - La comparación debe comprobar igualdad píxel a píxel para la misma entrada y filtro. Si no son iguales, reportar error, no presentar resultados como correctos.
 - Manejar rutas inexistentes, errores de memoria, tamaños de entrada inválidos y tamaños de filtro no admitidos. Ninguna función debe sobrescribir memoria fuera del búfer.
 
-## Menú actual (módulo secuencial)
+## Reparto de filas con OpenMP
+
+La imagen de entrada reside en memoria compartida. Un `parallel for` con `schedule(static)` distribuye las filas de salida en bloques contiguos entre los hilos. El coste de las filas interiores es similar y el reparto se decide al inicio. Las filas superior e inferior del borde son más baratas porque solo se copian. `num_threads` solicita el tamaño del equipo para esta llamada.
+
+Cada iteración es dueña de una fila de salida. En un borde escribe una copia RGB y en el interior escribe el cociente entero por canal. Los acumuladores e índices son locales a cada iteración. Dos ventanas vecinas pueden leer el mismo byte de entrada. Como los búferes son disjuntos y los destinos de las filas son diferentes, las escrituras son independientes. La barrera al final del bucle precede al guardado del PNG.
+
+## Menú actual
 1. Seleccionar JPG/PNG.
 2. Elegir 3x3, 7x7 o 15x15.
 3. Ejecutar filtro secuencial y guardar PNG.
 4. Generar automáticamente las tres versiones secuenciales.
-5. Ejecutar paralelo (**pendiente**).
+5. Ejecutar paralelo con 1, 2 o 4 hilos y guardar PNG.
 6. Comparar secuencial/paralelo (**pendiente**).
 7. Experimentos y gráficas (**pendiente**).
 8. Salir.
 
-**Integración prevista:** la opción paralela debe permitir configurar hilos; la comparación deberá validar igualdad, medir tiempos, speedup y eficiencia. Los experimentos cubrirán al menos tres resoluciones, 1/2/4 hilos (cuando el hardware lo permita), repeticiones y gráficas SVG derivadas de los CSV reales.
+**Integración prevista:** la opción 6 deberá validar la igualdad y medir tiempos, speedup y eficiencia. Los experimentos cubrirán al menos tres resoluciones, 1/2/4 hilos (cuando el hardware lo permita), repeticiones y gráficas SVG derivadas de los CSV reales.
 
 **Ideal:** además del menú, ofrecer CLI no interactiva para automatización, por ejemplo
 `./programa --imagen imagenes/foto.jpg --filtro 15 --modo comparar --hilos 4`.

@@ -1,286 +1,133 @@
-
 # Procesamiento Digital de Imágenes RGB con OpenMP
 
-## 1. Descripción del proyecto
+Proyecto académico de **Computación Paralela y Distribuida** de la Universidad Sergio Arboleda. Se implementaron filtros de suavizado RGB en **C**, con versiones secuencial y paralela mediante **OpenMP**, para comparar sus resultados y su rendimiento.
 
-Proyecto académico de Computación Paralela y Distribuida.
+## Funcionalidades
 
-El objetivo es implementar y comparar el rendimiento de algoritmos de procesamiento digital de imágenes mediante programación secuencial y paralela utilizando C y OpenMP.
+- Lectura de imágenes JPG/PNG y guardado de resultados PNG.
+- Filtros de promedio de vecindad **3×3, 7×7 y 15×15**, aplicados a los tres canales RGB.
+- Ejecución secuencial y paralela con **1, 2 o 4 hilos**.
+- Comparación rápida sobre una fotografía mediante el menú (opción 6).
+- Pruebas automatizadas de equivalencia entre algoritmos.
+- Experimentos reproducibles con diferentes resoluciones, filtros e hilos, con registros CSV y gráficas PNG (opción 7 o script).
 
-La aplicación procesa fotografías JPG y PNG utilizando filtros de suavizado por promedio.
+El procesamiento mantiene sin cambios los píxeles de borde. El algoritmo paralelo distribuye filas con `#pragma omp parallel for schedule(static)`.
 
-### Filtros disponibles
+## Requisitos y entorno
 
-- 3x3: suavizado ligero.
-- 7x7: suavizado moderado.
-- 15x15: suavizado intenso.
+El programa utiliza GCC con soporte de OpenMP y Make. La lectura y escritura de imágenes depende de las cabeceras de la biblioteca **STB**. Para los experimentos automáticos se requiere **Python 3 y Matplotlib**.
 
-El procesamiento se realiza sobre los tres canales RGB.
+**Windows 11 con MSYS2 UCRT64** (entorno utilizado para las mediciones):
 
-## 2. Estado del desarrollo
+```bash
+pacman -S --needed make mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-python-matplotlib mingw-w64-ucrt-x86_64-stb
+```
 
-Actualmente funciona:
+La disponibilidad del paquete STB puede variar entre instalaciones; si no está disponible, se pueden proporcionar las cabeceras correspondientes en la ruta configurada para GCC. **El benchmark y las pruebas de filtros no necesitan STB; el menú de JPG/PNG sí.**
 
-- Lectura de imágenes JPG y PNG.
-- Procesamiento RGB.
-- Filtro secuencial configurable.
-- Menú interactivo.
-- Generación automática de las tres versiones.
-- Guardado de imágenes procesadas en PNG.
-- Pruebas automáticas mediante Makefile.
-
-Pendiente de integración:
-
-- Algoritmo paralelo con OpenMP.
-- Comparación secuencial y paralela.
-- Mediciones de tiempo y memoria.
-- Cálculo de speedup y eficiencia.
-- Generación automática de gráficas SVG.
-
-## 3. Tecnologías
-
-- Lenguaje C11.
-- GCC.
-- Ubuntu mediante WSL 2.
-- Visual Studio Code.
-- Git y GitHub.
-- Biblioteca STB para JPG y PNG.
-- OpenMP para paralelismo.
-
-## 4. Requisitos
-
-Se necesita:
-
-- Ubuntu o WSL con Ubuntu.
-- GCC.
-- Make.
-- Git.
-- Biblioteca libstb-dev.
-
-Para instalar las dependencias en Ubuntu:
+En **Ubuntu/WSL** se pueden instalar las dependencias con:
 
 ```bash
 sudo apt update
-sudo apt install build-essential git libstb-dev
+sudo apt install build-essential libstb-dev python3 python3-matplotlib
 ```
 
-No se requiere Python ni un entorno virtual.
-
-## 5. Descargar el proyecto
-
-Clonar el repositorio:
+## Descargar y compilar
 
 ```bash
-git clone https://github.com/linacastaneda/Procesamiento-Imagenes-openmp.git
+git clone https://github.com/EnragedMagic/Procesamiento-Imagenes-OpenMP.git
+cd Procesamiento-Imagenes-OpenMP
+
+make test
+make benchmark
 ```
 
-Entrar al directorio:
-
-```bash
-cd Procesamiento-Imagenes-openmp
-```
-
-Consultar la rama en la que se está trabajando:
-
-```bash
-git branch --show-current
-```
-
-IMPORTANTE: mientras los módulos estén en desarrollo,
-cada integrante debe utilizar su rama correspondiente.
-
-## 6. Compilación
-
-Compilar el programa:
+Para compilar el menú de imágenes (requiere STB):
 
 ```bash
 make
-```
-
-Ejecutar pruebas automáticas:
-
-```bash
-make test
-```
-
-Limpiar ejecutables:
-
-```bash
-make clean
-```
-
-## 7. Ejecutar la aplicación
-
-Iniciar el programa:
-
-```bash
 make run
 ```
 
-Aparecerá el menú principal:
+En Windows con MSYS2 UCRT64, ejecutar estos comandos en esa terminal. Los comandos de Git también pueden ejecutarse desde PowerShell.
+
+## Menú de la aplicación
 
 1. Seleccionar imagen.
 2. Seleccionar filtro.
-3. Ejecutar secuencial.
-4. Generar los tres filtros.
-5. Ejecutar paralelo (pendiente).
-6. Comparar algoritmos (pendiente).
-7. Experimentos y gráficas (pendiente).
+3. Ejecutar procesamiento secuencial.
+4. Generar los tres filtros secuenciales.
+5. Ejecutar procesamiento paralelo con 1, 2 o 4 hilos.
+6. Comparar tiempos secuencial/paralelo sobre la imagen seleccionada.
+7. Ejecutar experimentos y generar archivos CSV/gráficas.
 8. Salir.
 
-## 8. Selección de fotografías
+Para seleccionar la fotografía incluida, indicar `imagenes/foto.jpg` desde la raíz del proyecto. Los PNG procesados se guardan en `resultados/`.
 
-Las fotografías deben guardarse en la carpeta:
+La opción 6 ofrece una comparación puntual, mientras que **la metodología experimental** utiliza múltiples repeticiones y tamaños de imagen para obtener resultados más estables.
 
-`imagenes/`
+## Experimentación y métricas
 
-Actualmente existe una imagen de ejemplo:
-
-`imagenes/foto.jpg`
-
-Cuando el programa solicite la ruta, escribir:
-
-```text
-imagenes/foto.jpg
-```
-
-También pueden utilizarse otras fotografías JPG o PNG.
-
-Por ejemplo:
-
-```text
-imagenes/paisaje.jpg
-imagenes/ciudad.png
-imagenes/prueba.jpg
-```
-
-Las rutas son relativas a la carpeta principal del proyecto.
-
-## 9. Procesamiento automático
-
-Para generar los tres filtros:
-
-1. Ejecutar `make run`.
-2. Seleccionar la opción 1.
-3. Introducir `imagenes/foto.jpg`.
-4. Seleccionar la opción 4.
-5. Esperar a que termine el procesamiento.
-
-Se generarán archivos similares a:
-
-```text
-resultados/foto_secuencial_3x3_001.png
-resultados/foto_secuencial_7x7_001.png
-resultados/foto_secuencial_15x15_001.png
-```
-
-Los nombres incluyen:
-
-- Nombre de la fotografía.
-- Tipo de procesamiento.
-- Tamaño del filtro.
-- Número consecutivo.
-
-Así se evita sobrescribir resultados durante el uso normal.
-
-## 10. Pruebas
-
-Ejecutar:
+Ejecutar desde la raíz del proyecto:
 
 ```bash
 make test
+make benchmark
+python3 scripts/experimentar.py --resoluciones 256 512 1024 2048 --hilos 1 2 4 --filtros 3 7 15 --repeticiones 5
 ```
 
-Resultado esperado:
+Se evalúan **36 configuraciones**: 4 resoluciones, 3 filtros y 3 cantidades de hilos. Cada configuración se mide 5 veces en secuencial y 5 en paralelo, para un total de **360 registros**.
+
+El benchmark genera datos RGB **sintéticos y deterministas**, idénticos para ambos modos, verifica igualdad byte a byte y mide únicamente el tiempo de aplicación del filtro mediante `omp_get_wtime()`. Se excluyen la lectura del JPG, la reserva de memoria y la escritura PNG. No se midieron directamente memoria máxima ni consumo energético.
+
+Las medidas se resumen mediante la mediana:
+
+- **Speedup:** `S(p) = T_secuencial / T_paralelo(p)`.
+- **Eficiencia:** `E(p) = S(p) / p`.
+- **Diferencia respecto al ideal:** `O_ideal(p) = T_paralelo(p) - T_secuencial / p`.
+
+`O_ideal` **no es una medición aislada** del overhead interno de OpenMP; también puede reflejar otros efectos. El reparto estático de filas no basta para cuantificar el balance de carga real entre hilos.
+
+Los resultados se crean localmente en `resultados_experimentos/`:
+
+- `mediciones.csv`: mediciones individuales y verificaciones.
+- `resumen.csv`: medianas y métricas.
+- `entorno.txt`: información del sistema.
+- `speedup_*.png`, `eficiencia_*.png`, `tiempo_paralelo_s_*.png`: gráficas.
+
+**Nota:** la carpeta de resultados generados está excluida por `.gitignore`. Las evidencias seleccionadas y el informe final se incorporarán en una carpeta `informe/`, para conservarlas de forma controlada en el repositorio.
+
+## Resultados obtenidos
+
+En el equipo de pruebas (AMD Ryzen 7 5700X, 8 núcleos físicos, 16 procesadores lógicos, 32 GB RAM, Windows 11, MSYS2 UCRT64, GCC 16.2.0), para resolución **2048×2048** y **4 hilos**:
+
+| Filtro | Secuencial (s) | Paralelo (s) | Speedup | Eficiencia |
+| --- | ---: | ---: | ---: | ---: |
+| 3×3 | 0,045 | 0,012 | 3,75× | 93,75 % |
+| 7×7 | 0,166 | 0,047 | 3,53× | 88,30 % |
+| 15×15 | 0,815 | 0,345 | 2,36× | 59,06 % |
+
+Son resultados experimentales de **una ejecución en un equipo concreto**, no garantías de rendimiento en otras máquinas. Algunas mediciones de muy corta duración se registraron como cero; para esos casos no se debe interpretar un speedup infinito.
+
+## Estructura
 
 ```text
-Filtro 3x3: OK
-Filtro 7x7: OK
-Filtro 15x15: OK
-
-Resultado general: TODAS LAS PRUEBAS OK
+include/                 Cabeceras de imagen y filtros
+src/                     Programa principal y versiones secuencial/paralela
+imagenes/                Fotografía de ejemplo
+tests/                   Pruebas RGB, de equivalencia y benchmark
+scripts/                 Automatización de experimentos
+docs/                    Diseño técnico, dependencias y metodología
+resultados_experimentos/  Generados localmente; excluidos de Git
+Makefile                 Compilación y pruebas
+README.md                Documentación principal
 ```
 
-Estas pruebas verifican matemáticamente el filtro secuencial RGB.
+La metodología detallada está en [docs/METODOLOGIA_EXPERIMENTAL.md](docs/METODOLOGIA_EXPERIMENTAL.md).
 
-## 11. Estructura del proyecto
+## Equipo
 
-```text
-procesamiento-imagenes-openmp/
-├── include/
-│   ├── imagen.h
-│   └── filtros.h
-├── src/
-│   ├── main.c
-│   ├── imagen.c
-│   └── filtro_secuencial.c
-├── imagenes/
-│   └── foto.jpg
-├── resultados/
-├── tests/
-│   └── test_rgb.c
-├── docs/
-│   ├── DISENO_TECNICO.md
-│   └── DEPENDENCIAS.md
-├── Makefile
-├── .gitignore
-└── README.md
-```
+- **Lina María Castañeda**
+- **Johan Steven Galeano**
+- **Juan Vasquez**
 
-## 12. Organización del equipo
-
-### Integrante 1 — Secuencial
-
-Rama: `secuencial`
-
-Responsabilidades:
-
-- Lectura de imágenes.
-- Procesamiento secuencial RGB.
-- Menú base.
-- Pruebas funcionales.
-
-### Integrante 2 — Paralelo
-
-Rama: `paralelo`
-
-Responsabilidades:
-
-- Implementación paralela con OpenMP.
-- Configuración de hilos.
-- Validación de equivalencia.
-- Integración al menú.
-
-### Integrante 3 — Experimentos
-
-Rama: `experimentos`
-
-Responsabilidades:
-
-- Medición de tiempos.
-- Análisis de memoria.
-- Speedup y eficiencia.
-- Registro CSV.
-- Gráficas SVG.
-- Resultados experimentales.
-
-## 13. Integración
-
-Cada integrante desarrolla su módulo en su rama.
-
-Las modificaciones deben integrarse mediante Pull Requests a `main`.
-
-Antes de modificar funciones compartidas, revisar:
-
-`docs/DISENO_TECNICO.md`
-
-Todos los integrantes deben conocer el funcionamiento completo del proyecto.
-
-## 14. Resultados experimentales
-
-Los tiempos y las métricas deben obtenerse mediante ejecuciones reales.
-
-No deben utilizarse datos simulados como resultados definitivos.
-
-Los experimentos deberán comparar las mismas imágenes y tamaños de filtro en las versiones secuencial y paralela.
-```

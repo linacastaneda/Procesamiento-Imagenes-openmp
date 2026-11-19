@@ -5,6 +5,7 @@
 *.exe
 programa
 test_rgb
+test_paralelo
 demo_secuencial
 test_imagen
 test_secuencial
@@ -23,3 +24,6 @@ resultados/*.pgm
 # Conservar datos y graficas de experimentos
 !resultados/*.csv
 !resultados/*.svg
+benchmark
+resultados_experimentos/
+__pycache__/

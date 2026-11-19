@@ -1,0 +1,11 @@
+Sistema: Windows-11-10.0.26200-SP0
+CPU reportadas: 16
+Python: 3.14.7
+Compilacion: GCC -O2 -fopenmp
+
+$ gcc --version
+gcc (Rev4, Built by MSYS2 project) 16.2.0
+Copyright (C) 2026 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+

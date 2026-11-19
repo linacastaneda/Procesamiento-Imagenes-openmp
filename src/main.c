@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
+#include <omp.h>
 
 #define MAX_RUTA 512
 #define MAX_DESTINO 1024
@@ -85,6 +86,7 @@ static int existe_archivo(const char *ruta) {
 static int generar_destino(
     const char *ruta_original,
     int tamano,
+    const char *modo,
     char *destino,
     size_t capacidad
 ) {
@@ -96,8 +98,8 @@ static int generar_destino(
         int longitud = snprintf(
             destino,
             capacidad,
-            "resultados/%s_secuencial_%dx%d_%03d.png",
-            nombre, tamano, tamano, n
+            "resultados/%s_%s_%dx%d_%03d.png",
+            nombre, modo, tamano, tamano, n
         );
 
         if (longitud < 0 ||
@@ -114,7 +116,8 @@ static int generar_destino(
 /* Procesar una imagen con el filtro seleccionado. */
 static int procesar_imagen(
     const char *ruta,
-    int tamano_filtro
+    int tamano_filtro,
+    int hilos  /* 0 selecciona el filtro secuencial. */
 ) {
     Imagen entrada = {0};
     Imagen salida = {0};
@@ -151,7 +154,7 @@ static int procesar_imagen(
     }
 
     if (!generar_destino(
-            ruta, tamano_filtro,
+            ruta, tamano_filtro, hilos ? "paralelo" : "secuencial",
             destino, sizeof(destino))) {
 
         printf("ERROR: no se pudo crear el nombre.\n");
@@ -163,9 +166,10 @@ static int procesar_imagen(
     printf("\nProcesando filtro %dx%d...\n",
            tamano_filtro, tamano_filtro);
 
-    suavizar_secuencial(
-        &entrada, &salida, tamano_filtro
-    );
+    if (hilos > 0)
+        suavizar_paralelo(&entrada, &salida, tamano_filtro, hilos);
+    else
+        suavizar_secuencial(&entrada, &salida, tamano_filtro);
 
     int correcto = guardar_png(destino, &salida) == 0;
 
@@ -205,9 +209,9 @@ int main(void) {
         printf("2. Seleccionar filtro\n");
         printf("3. Ejecutar secuencial\n");
         printf("4. Generar los tres filtros\n");
-        printf("5. Ejecutar paralelo (pendiente)\n");
-        printf("6. Comparar algoritmos (pendiente)\n");
-        printf("7. Experimentos y graficas (pendiente)\n");
+        printf("5. Ejecutar paralelo\n");
+        printf("6. Comparar algoritmos\n");
+        printf("7. Experimentos y graficas\n");
         printf("8. Salir\n");
         printf("\nOpcion: ");
 
@@ -254,7 +258,7 @@ int main(void) {
                     break;
                 }
 
-                procesar_imagen(ruta, tamano_filtro);
+                procesar_imagen(ruta, tamano_filtro, 0);
                 break;
 
             case 4: {
@@ -267,7 +271,7 @@ int main(void) {
                 int exitos = 0;
 
                 for (int i = 0; i < 3; i++) {
-                    if (procesar_imagen(ruta, filtros[i]))
+                    if (procesar_imagen(ruta, filtros[i], 0))
                         exitos++;
                 }
 
@@ -276,11 +280,64 @@ int main(void) {
                 break;
             }
 
-            case 5:
-            case 6:
-            case 7:
-                printf("Modulo pendiente de integrar.\n");
+            case 5: {
+                if (ruta[0] == '\0') {
+                    printf("Primero seleccione una imagen.\n");
+                    break;
+                }
+                printf("Numero de hilos (1, 2 o 4): ");
+                int hilos = leer_numero();
+                if (hilos != 1 && hilos != 2 && hilos != 4) {
+                    printf("Numero de hilos no valido.\n");
+                    break;
+                }
+                procesar_imagen(ruta, tamano_filtro, hilos);
                 break;
+            }
+            case 6: {
+                if (ruta[0] == '\0') {
+                    printf("Primero seleccione una imagen.\n");
+                    break;
+                }
+                Imagen entrada = {0}, sec = {0}, par = {0};
+                if (leer_imagen(ruta, &entrada) != 0) {
+                    printf("No se pudo abrir la imagen.\n");
+                    break;
+                }
+                size_t bytes = (size_t)entrada.ancho * entrada.alto * 3;
+                sec = (Imagen){entrada.ancho, entrada.alto, malloc(bytes), 3};
+                par = (Imagen){entrada.ancho, entrada.alto, malloc(bytes), 3};
+                if (!sec.pixeles || !par.pixeles) {
+                    printf("Memoria insuficiente.\n");
+                } else {
+                    double inicio = omp_get_wtime();
+                    suavizar_secuencial(&entrada, &sec, tamano_filtro);
+                    double ts = omp_get_wtime() - inicio;
+                    printf("Secuencial: %.6f segundos\n", ts);
+                    int hilos[] = {1, 2, 4};
+                    for (int i = 0; i < 3; ++i) {
+                        inicio = omp_get_wtime();
+                        suavizar_paralelo(&entrada, &par, tamano_filtro, hilos[i]);
+                        double tp = omp_get_wtime() - inicio;
+                        int igual = memcmp(sec.pixeles, par.pixeles, bytes) == 0;
+                        printf("Paralelo %d hilos: %.6f s, speedup %.3f, eficiencia %.3f, igualdad %s\n",
+                               hilos[i], tp, tp > 0 ? ts / tp : 0,
+                               tp > 0 ? ts / (tp * hilos[i]) : 0, igual ? "OK" : "ERROR");
+                    }
+                    printf("Comparacion rapida: para resultados experimentales use opcion 7.\n");
+                }
+                liberar_imagen(&entrada);
+                liberar_imagen(&sec);
+                liberar_imagen(&par);
+                break;
+            }
+            case 7: {
+                printf("Ejecutando experimentos reproducibles (sin archivos de imagen)...\n");
+                int codigo = system("python3 scripts/experimentar.py");
+                if (codigo != 0) printf("Error al ejecutar. Desde la terminal: make experimentos\n");
+                else printf("Archivos CSV y graficas en resultados_experimentos/\n");
+                break;
+            }
 
             case 8:
                 printf("Programa finalizado.\n");

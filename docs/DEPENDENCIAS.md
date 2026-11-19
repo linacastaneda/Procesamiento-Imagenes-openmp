@@ -49,7 +49,7 @@ ls /usr/include/stb/stb_image.h
 ls /usr/include/stb/stb_image_write.h
 ```
 
-## Compilación secuencial
+## Compilación
 
 Desde la carpeta principal:
 
@@ -77,7 +77,7 @@ GCC incluye soporte de OpenMP mediante la opción:
 -fopenmp
 ```
 
-La integración definitiva se realizará cuando esté implementado `src/filtro_paralelo.c`.
+El Makefile pasa `-fopenmp` al compilar y enlazar el programa y la prueba paralela. La prueba matemática del secuencial también se puede ejecutar por separado con `make test_rgb && ./test_rgb`.
 
 ## Notas
 
